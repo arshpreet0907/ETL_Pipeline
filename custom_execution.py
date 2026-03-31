@@ -61,7 +61,6 @@ def get_windows():
         print(f"from: '{watermark_from}' to: '{watermark_to}'")
         # whole_pipeline(watermark_from,watermark_to)
 
-
 if __name__=="__main__":
     # clean_data=source_assertions()
     # check_source_data_working()

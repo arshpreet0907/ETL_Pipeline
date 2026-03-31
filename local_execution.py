@@ -86,7 +86,12 @@ if __name__ == "__main__":
     parser.add_argument("--watermark-to", default=None)
     args = parser.parse_args()
 
-    whole_pipeline(watermark_from=args.watermark_from, watermark_to=args.watermark_to)
+    watermark_from=args.watermark_from
+    # watermark_from=None
+    watermark_to=args.watermark_to
+    # watermark_to=None
+
+    whole_pipeline(watermark_from=watermark_from, watermark_to=watermark_to)
 
 
 
