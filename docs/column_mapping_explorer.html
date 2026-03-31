@@ -1,0 +1,163 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tab-row{display:flex;gap:4px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.25rem}
+.tab{padding:7px 14px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:4px 4px 0 0}
+.tab:hover{background:var(--color-background-secondary)}
+.tab.on{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary);font-weight:500}
+.pane{display:none}.pane.on{display:block}
+.desc-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.75rem 1rem;font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.col-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);overflow:hidden}
+.col-header{padding:8px 12px;font-size:12px;font-weight:500;color:var(--color-text-tertiary);background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);letter-spacing:0.05em}
+.col-row{display:flex;flex-direction:column;padding:8px 12px;border-bottom:0.5px solid var(--color-border-tertiary);gap:3px}
+.col-row:last-child{border-bottom:none}
+.col-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.col-name{font-size:12px;font-weight:500;color:var(--color-text-primary);font-family:var(--font-mono)}
+.col-meaning{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+.col-op{font-size:11px;color:var(--color-text-tertiary);font-style:italic;margin-top:1px}
+.tag{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500;white-space:nowrap;flex-shrink:0}
+.t-direct {background:#EAF3DE;color:#27500A}
+.t-renamed{background:#E6F1FB;color:#0C447C}
+.t-derived{background:#FAEEDA;color:#633806}
+.t-dropped{background:#FCEBEB;color:#791F1F;text-decoration:line-through}
+.arrow-row{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:2px}
+.src-col{font-family:var(--font-mono);color:var(--color-text-secondary)}
+.arrow{color:var(--color-text-tertiary)}
+.tgt-col{font-family:var(--font-mono);color:var(--color-text-primary)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1rem}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
+</style>
+
+<div style="padding:1rem 0">
+<div class="legend">
+  <div class="leg-item"><span class="tag t-direct">direct</span> Passes through unchanged</div>
+  <div class="leg-item"><span class="tag t-renamed">renamed</span> Same value, new column name</div>
+  <div class="leg-item"><span class="tag t-derived">derived</span> New column, computed from source</div>
+  <div class="leg-item"><span class="tag t-dropped">dropped</span> Not loaded to target</div>
+</div>
+
+<div class="tab-row">
+  <div class="tab on" onclick="sw(0)">vehicles</div>
+  <div class="tab" onclick="sw(1)">parts</div>
+  <div class="tab" onclick="sw(2)">suppliers</div>
+  <div class="tab" onclick="sw(3)">quality_checks</div>
+</div>
+
+<div class="pane on" id="p0">
+  <div class="desc-box">A vehicle record is created when a chassis enters the production line. It tracks the identity, configuration, and manufacturing context of each unit — which plant built it, on which shift, with what engine — plus its final quality score awarded after all inspections pass.</div>
+  <div class="grid">
+    <div class="col-card">
+      <div class="col-header">Source columns</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">vehicle_id</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Internal auto-increment PK</div><div class="arrow-row"><span class="src-col">vehicle_id</span><span class="arrow">→</span><span class="tgt-col">src_vehicle_id</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">vin</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">17-char global vehicle identifier</div><div class="arrow-row"><span class="src-col">vin</span><span class="arrow">→</span><span class="tgt-col">vin_number</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">model_code</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Product line (SEDAN_X1, SUV_Z3…)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">variant</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Trim level — merged into derived col</div><div class="col-op">Consumed by model_variant_name</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">color_code</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Paint colour reference code</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">engine_type</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Powertrain variant (EV_MOTOR etc.)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">plant_code</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Factory site identifier</div><div class="arrow-row"><span class="src-col">plant_code</span><span class="arrow">→</span><span class="tgt-col">manufacturing_plant</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">line_number</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Assembly line within plant</div><div class="col-op">Operational detail, not needed in DW</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">production_date</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Date vehicle completed assembly</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">shift</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Morning / Afternoon / Night</div><div class="arrow-row"><span class="src-col">shift</span><span class="arrow">→</span><span class="tgt-col">production_shift</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">status</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">COMPLETED / IN_PROGRESS / ON_HOLD / REJECTED</div><div class="arrow-row"><span class="src-col">status</span><span class="arrow">→</span><span class="tgt-col">production_status</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">quality_score</span><span class="tag t-direct">direct</span></div><div class="col-meaning">0–100 composite QC score</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">weight_kg</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Gross vehicle weight at completion</div><div class="arrow-row"><span class="src-col">weight_kg</span><span class="arrow">→</span><span class="tgt-col">gross_weight_kg</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">created_at</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Row insert timestamp</div><div class="col-op">System metadata, not business data</div></div>
+    </div>
+    <div class="col-card">
+      <div class="col-header">Target — derived columns added</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">vehicle_sk</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Surrogate key for DW (replaces natural PK)</div><div class="col-op">range(1, n+1) — DW standard</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">model_variant_name</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Combined model + trim label</div><div class="col-op">model_code + "_" + variant</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">production_year</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Year extracted for partitioning / grouping</div><div class="col-op">dt.year from production_date</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">production_month</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Month extracted for seasonality analysis</div><div class="col-op">dt.month from production_date</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">quality_tier</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Human label for quality band</div><div class="col-op">np.select: ≥90→PREMIUM, ≥75→STANDARD, ≥60→ECONOMY</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">weight_category</span><span class="tag t-derived">derived</span></div><div class="col-meaning">HEAVY (>2500kg) or LIGHT</div><div class="col-op">np.where on gross_weight_kg</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">is_electric_vehicle</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Boolean flag for EV fleet analytics</div><div class="col-op">(engine_type == "EV_MOTOR").astype(int)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pane" id="p1">
+  <div class="desc-box">Every physical component attached to a vehicle during assembly is logged here — one row per part per vehicle. This is effectively the Bill of Materials (BOM) in transactional form. It records which supplier provided the part, how long installation took, its cost, and whether a defect was flagged during fitment.</div>
+  <div class="grid">
+    <div class="col-card">
+      <div class="col-header">Source columns</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">part_id</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Auto-increment PK for this BOM line</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">vehicle_id</span><span class="tag t-direct">direct</span></div><div class="col-meaning">FK → vehicles — which car this part belongs to</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">part_number</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Manufacturer's catalogue number (PN####)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">part_name</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Human name (Engine Block, Airbag Unit…)</div><div class="arrow-row"><span class="src-col">part_name</span><span class="arrow">→</span><span class="tgt-col">component_name</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">supplier_code</span><span class="tag t-direct">direct</span></div><div class="col-meaning">FK → suppliers — who made this part</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">quantity</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Units of this part used on this vehicle</div><div class="arrow-row"><span class="src-col">quantity</span><span class="arrow">→</span><span class="tgt-col">quantity_used</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">unit_cost</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Cost per unit at time of purchase</div><div class="arrow-row"><span class="src-col">unit_cost</span><span class="arrow">→</span><span class="tgt-col">unit_cost_eur</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">currency</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Was EUR for all rows in this dataset</div><div class="col-op">Baked into column name unit_cost_eur</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">install_time_min</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Minutes taken to fit this part</div><div class="col-op">Replaced by install_time_hrs (÷60)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">defect_flag</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">1 if fitment defect detected, else 0</div><div class="arrow-row"><span class="src-col">defect_flag</span><span class="arrow">→</span><span class="tgt-col">has_defect_flag</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">batch_number</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Supplier delivery batch (for recalls)</div></div>
+    </div>
+    <div class="col-card">
+      <div class="col-header">Target — derived columns added</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">total_cost_eur</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Full cost of this line item</div><div class="col-op">quantity × unit_cost — numpy vectorised</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">cost_tier</span><span class="tag t-derived">derived</span></div><div class="col-meaning">HIGH_VALUE / MID_VALUE / LOW_VALUE</div><div class="col-op">np.select: &gt;2000→HIGH, &gt;500→MID, else LOW</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">installation_hrs</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Install time in hours (analyst-friendly unit)</div><div class="col-op">install_time_min / 60, rounded to 2dp</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pane" id="p2">
+  <div class="desc-box">The supplier master table — one row per external company that provides components. Tier 1 suppliers deliver directly to the plant (strategic partners). Tier 2 supply to Tier 1. Tier 3 are commodity or approved-list vendors. Rating is a rolling performance score (1–5) used in procurement decisions.</div>
+  <div class="grid">
+    <div class="col-card">
+      <div class="col-header">Source columns</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">supplier_id</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Auto-increment PK</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">supplier_code</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Short code used on part records (SUP001…)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">supplier_name</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Legal trading name</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">country</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">HQ / primary manufacturing country</div><div class="arrow-row"><span class="src-col">country</span><span class="arrow">→</span><span class="tgt-col">country_of_origin</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">tier</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Supply chain tier (1 = direct, 3 = commodity)</div><div class="arrow-row"><span class="src-col">tier</span><span class="arrow">→</span><span class="tgt-col">supplier_tier</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">rating</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Performance score 0–5 (quality + delivery)</div><div class="arrow-row"><span class="src-col">rating</span><span class="arrow">→</span><span class="tgt-col">performance_rating</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">contract_start</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Start of current supply agreement</div><div class="arrow-row"><span class="src-col">contract_start</span><span class="arrow">→</span><span class="tgt-col">contract_start_date</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">contract_end</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Expiry of current supply agreement</div><div class="arrow-row"><span class="src-col">contract_end</span><span class="arrow">→</span><span class="tgt-col">contract_end_date</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">is_active</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">Binary 0/1 flag</div><div class="col-op">Replaced by active_status (readable string)</div></div>
+    </div>
+    <div class="col-card">
+      <div class="col-header">Target — derived columns added</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">tier_label</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Human-readable tier name</div><div class="col-op">{1→STRATEGIC, 2→PREFERRED, 3→APPROVED}</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">contract_duration_days</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Length of contract in days</div><div class="col-op">(contract_end - contract_start).dt.days</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">active_status</span><span class="tag t-derived">derived</span></div><div class="col-meaning">ACTIVE or INACTIVE string label</div><div class="col-op">np.where(is_active==1, "ACTIVE", "INACTIVE")</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pane" id="p3">
+  <div class="desc-box">Each vehicle passes through multiple inspection stations before it can be marked complete. A quality check row records one test at one station — paint finish, structural integrity, emissions, electrical systems, or safety systems. If a test fails, the defect code, rework time, and inspector are logged for accountability and warranty traceability.</div>
+  <div class="grid">
+    <div class="col-card">
+      <div class="col-header">Source columns</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">check_id</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Auto-increment PK</div><div class="arrow-row"><span class="src-col">check_id</span><span class="arrow">→</span><span class="tgt-col">qc_id</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">vehicle_id</span><span class="tag t-direct">direct</span></div><div class="col-meaning">FK → vehicles — which vehicle was checked</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">check_date</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Date this specific test was run</div><div class="arrow-row"><span class="src-col">check_date</span><span class="arrow">→</span><span class="tgt-col">inspection_date</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">inspector_id</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Employee code of the QC inspector</div><div class="arrow-row"><span class="src-col">inspector_id</span><span class="arrow">→</span><span class="tgt-col">inspector_code</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">station</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">Physical station on the QC floor</div><div class="arrow-row"><span class="src-col">station</span><span class="arrow">→</span><span class="tgt-col">inspection_station</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">test_type</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">PAINT / ELECTRICAL / STRUCTURAL / EMISSIONS / SAFETY</div><div class="arrow-row"><span class="src-col">test_type</span><span class="arrow">→</span><span class="tgt-col">test_category</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">result</span><span class="tag t-renamed">renamed</span></div><div class="col-meaning">OK / MINOR_ISSUE / MAJOR_ISSUE</div><div class="arrow-row"><span class="src-col">result</span><span class="arrow">→</span><span class="tgt-col">inspection_result</span></div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">defect_code</span><span class="tag t-direct">direct</span></div><div class="col-meaning">DEF### code if defect found, else null</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">rework_hours</span><span class="tag t-direct">direct</span></div><div class="col-meaning">Hours spent fixing — null if passed</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">pass_fail</span><span class="tag t-dropped">dropped</span></div><div class="col-meaning">String PASS / FAIL</div><div class="col-op">Replaced by is_passed numeric flag</div></div>
+    </div>
+    <div class="col-card">
+      <div class="col-header">Target — derived columns added</div>
+      <div class="col-row"><div class="col-top"><span class="col-name">inspection_year</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Year extracted for time-series partitioning</div><div class="col-op">pd.to_datetime(check_date).dt.year</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">has_defect</span><span class="tag t-derived">derived</span></div><div class="col-meaning">1 if defect_code is not null, else 0</div><div class="col-op">defect_code.notna().astype(int)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">rework_cost_usd</span><span class="tag t-derived">derived</span></div><div class="col-meaning">Estimated labour cost of rework</div><div class="col-op">rework_hours × $85/hr (standard rate)</div></div>
+      <div class="col-row"><div class="col-top"><span class="col-name">is_passed</span><span class="tag t-derived">derived</span></div><div class="col-meaning">1 = pass, 0 = fail (numeric for aggregation)</div><div class="col-op">(pass_fail == "PASS").astype(int)</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function sw(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',j===i));
+  document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('on',j===i));
+}
+</script>

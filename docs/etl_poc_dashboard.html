@@ -1,0 +1,266 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.section { margin-bottom: 2rem; }
+.section-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.85rem 1rem; }
+.card-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.card-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.card-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.pipeline { display: flex; align-items: center; gap: 0; margin-bottom: 1.5rem; }
+.stage { flex: 1; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.7rem 0.8rem; }
+.stage-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+.stage-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.arrow-sep { font-size: 16px; color: var(--color-text-tertiary); padding: 0 6px; flex-shrink: 0; }
+.tables-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.table-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+.table-header { padding: 0.6rem 0.9rem; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; justify-content: space-between; align-items: center; }
+.table-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.table-badge { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-tertiary); border-radius: 4px; padding: 2px 6px; }
+.col-list { padding: 0.5rem 0; max-height: 180px; overflow-y: auto; }
+.col-row { display: flex; align-items: center; padding: 3px 0.9rem; gap: 8px; font-size: 12px; }
+.col-row:hover { background: var(--color-background-secondary); }
+.col-name { color: var(--color-text-primary); flex: 1; }
+.col-tag { font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 500; white-space: nowrap; }
+.tag-direct  { background: #E6F1FB; color: #0C447C; }
+.tag-renamed { background: #EAF3DE; color: #27500A; }
+.tag-derived { background: #FAEEDA; color: #633806; }
+.tag-dropped { background: #FCEBEB; color: #791F1F; }
+.assertions-list { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+.assertion-row { display: flex; align-items: center; padding: 5px 12px; gap: 10px; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+.assertion-row:last-child { border-bottom: none; }
+.a-status { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+.a-pass { background: #C0DD97; color: #27500A; }
+.a-fail { background: #F7C1C1; color: #791F1F; }
+.a-table { color: var(--color-text-tertiary); width: 90px; flex-shrink: 0; }
+.a-name { color: var(--color-text-primary); flex: 1; }
+.a-detail { color: var(--color-text-tertiary); font-size: 11px; }
+.tab-bar { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1rem; }
+.tab { padding: 6px 12px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.mapping-legend { display: flex; gap: 12px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary); }
+.analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.bar-chart { }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+.bar-label { width: 90px; color: var(--color-text-secondary); text-align: right; flex-shrink: 0; font-size: 11px; }
+.bar-track { flex: 1; height: 16px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.bar-val { font-size: 11px; color: var(--color-text-tertiary); width: 48px; }
+</style>
+
+<div style="padding: 1rem 0">
+
+<div class="section">
+  <div class="section-label">Pipeline overview</div>
+  <div class="pipeline">
+    <div class="stage"><div class="stage-title">Source DB</div><div class="stage-sub">SQLite in-memory</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Extract</div><div class="stage-sub">pd.read_sql()</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Assert</div><div class="stage-sub">23 checks</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Transform</div><div class="stage-sub">pandas + numpy</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Map</div><div class="stage-sub">Column mapping</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Load</div><div class="stage-sub">.to_sql()</div></div>
+    <div class="arrow-sep">→</div>
+    <div class="stage"><div class="stage-title">Target DB</div><div class="stage-sub">SQLite in-memory</div></div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="card-label">Total rows migrated</div><div class="card-value">2,065</div><div class="card-sub">Across 4 tables</div></div>
+    <div class="card"><div class="card-label">Assertions</div><div class="card-value" style="color:#3B6D11">23 / 23</div><div class="card-sub">All passed</div></div>
+    <div class="card"><div class="card-label">Column mappings</div><div class="card-value">54</div><div class="card-sub">Direct · Renamed · Derived</div></div>
+    <div class="card"><div class="card-label">Columns dropped</div><div class="card-value">7</div><div class="card-sub">Not needed in target</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('schema')">Schema & mappings</div>
+    <div class="tab" onclick="switchTab('assertions')">Assertions</div>
+    <div class="tab" onclick="switchTab('analytics')">Sample analytics</div>
+  </div>
+
+  <div class="tab-content active" id="tab-schema">
+    <div class="mapping-legend">
+      <div class="legend-item"><span class="col-tag tag-direct">DIRECT</span> Same name, same value</div>
+      <div class="legend-item"><span class="col-tag tag-renamed">RENAMED</span> Different name, same value</div>
+      <div class="legend-item"><span class="col-tag tag-derived">DERIVED</span> New column, computed</div>
+      <div class="legend-item"><span class="col-tag tag-dropped">DROPPED</span> Not in target</div>
+    </div>
+    <div class="tables-grid">
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-name">vehicles</span><span class="table-badge">200 rows · 14→18 cols</span></div>
+        <div class="col-list">
+          <div class="col-row"><span class="col-name">vehicle_sk</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">src_vehicle_id</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">vin_number</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">model_variant_name</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">model_code</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">color_code</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">engine_type</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">manufacturing_plant</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">production_date</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">production_year</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">production_month</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">production_shift</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">quality_score</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">quality_tier</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">gross_weight_kg</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">weight_category</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">is_electric_vehicle</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row" style="opacity:0.5"><span class="col-name">variant, created_at, line_number</span><span class="col-tag tag-dropped">DROPPED</span></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-name">parts</span><span class="table-badge">1,128 rows · 11→12 cols</span></div>
+        <div class="col-list">
+          <div class="col-row"><span class="col-name">part_id</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">vehicle_id</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">part_number</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">component_name</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">supplier_code</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">quantity_used</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">unit_cost_eur</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">total_cost_eur</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">cost_tier</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">installation_hrs</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">has_defect_flag</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">batch_number</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row" style="opacity:0.5"><span class="col-name">currency, install_time_min</span><span class="col-tag tag-dropped">DROPPED</span></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-name">suppliers</span><span class="table-badge">20 rows · 9→11 cols</span></div>
+        <div class="col-list">
+          <div class="col-row"><span class="col-name">supplier_id</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">supplier_code</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">supplier_name</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">country_of_origin</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">supplier_tier</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">tier_label</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">performance_rating</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">contract_start_date</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">contract_end_date</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">contract_duration_days</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">active_status</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row" style="opacity:0.5"><span class="col-name">is_active</span><span class="col-tag tag-dropped">DROPPED</span></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><span class="table-name">quality_checks</span><span class="table-badge">717 rows · 10→13 cols</span></div>
+        <div class="col-list">
+          <div class="col-row"><span class="col-name">qc_id</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">vehicle_id</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">inspection_date</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">inspection_year</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">inspector_code</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">inspection_station</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">test_category</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">inspection_result</span><span class="col-tag tag-renamed">RENAMED</span></div>
+          <div class="col-row"><span class="col-name">defect_code</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">has_defect</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">rework_hours</span><span class="col-tag tag-direct">DIRECT</span></div>
+          <div class="col-row"><span class="col-name">rework_cost_usd</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row"><span class="col-name">is_passed</span><span class="col-tag tag-derived">DERIVED</span></div>
+          <div class="col-row" style="opacity:0.5"><span class="col-name">pass_fail</span><span class="col-tag tag-dropped">DROPPED</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-assertions">
+    <div class="assertions-list" id="assertion-list"></div>
+  </div>
+
+  <div class="tab-content" id="tab-analytics">
+    <div class="analytics-grid">
+      <div>
+        <div class="section-label">Quality tier distribution</div>
+        <div class="bar-chart">
+          <div class="bar-row"><span class="bar-label">PREMIUM</span><div class="bar-track"><div class="bar-fill" style="width:57%;background:#1D9E75"></div></div><span class="bar-val">57 vehicles</span></div>
+          <div class="bar-row"><span class="bar-label">STANDARD</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:#3B8BD4"></div></div><span class="bar-val">72 vehicles</span></div>
+          <div class="bar-row"><span class="bar-label">ECONOMY</span><div class="bar-track"><div class="bar-fill" style="width:71%;background:#BA7517"></div></div><span class="bar-val">71 vehicles</span></div>
+        </div>
+        <div style="margin-top:1.25rem">
+          <div class="section-label">EV vs Non-EV</div>
+          <div class="bar-row"><span class="bar-label">EV</span><div class="bar-track"><div class="bar-fill" style="width:26%;background:#534AB7"></div></div><span class="bar-val">52 (26%)</span></div>
+          <div class="bar-row"><span class="bar-label">Non-EV</span><div class="bar-track"><div class="bar-fill" style="width:74%;background:#888780"></div></div><span class="bar-val">148 (74%)</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-label">Avg rework cost by test type (defects only)</div>
+        <div class="bar-chart">
+          <div class="bar-row"><span class="bar-label">SAFETY</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#E24B4A"></div></div><span class="bar-val">$422</span></div>
+          <div class="bar-row"><span class="bar-label">PAINT</span><div class="bar-track"><div class="bar-fill" style="width:89%;background:#D85A30"></div></div><span class="bar-val">$378</span></div>
+          <div class="bar-row"><span class="bar-label">ELECTRICAL</span><div class="bar-track"><div class="bar-fill" style="width:87%;background:#BA7517"></div></div><span class="bar-val">$369</span></div>
+          <div class="bar-row"><span class="bar-label">EMISSIONS</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:#639922"></div></div><span class="bar-val">$303</span></div>
+          <div class="bar-row"><span class="bar-label">STRUCTURAL</span><div class="bar-track"><div class="bar-fill" style="width:63%;background:#3B8BD4"></div></div><span class="bar-val">$266</span></div>
+        </div>
+        <div style="margin-top:1.25rem">
+          <div class="section-label">Column mapping breakdown</div>
+          <div class="bar-row"><span class="bar-label">RENAMED</span><div class="bar-track"><div class="bar-fill" style="width:78%;background:#3B8BD4"></div></div><span class="bar-val">21 cols</span></div>
+          <div class="bar-row"><span class="bar-label">DERIVED</span><div class="bar-track"><div class="bar-fill" style="width:63%;background:#BA7517"></div></div><span class="bar-val">17 cols</span></div>
+          <div class="bar-row"><span class="bar-label">DIRECT</span><div class="bar-track"><div class="bar-fill" style="width:59%;background:#1D9E75"></div></div><span class="bar-val">16 cols</span></div>
+          <div class="bar-row"><span class="bar-label">DROPPED</span><div class="bar-track"><div class="bar-fill" style="width:26%;background:#E24B4A"></div></div><span class="bar-val">7 cols</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const assertions = [
+  {table:"vehicles",name:"No null VINs",status:"PASS",detail:""},
+  {table:"vehicles",name:"VIN length = 17",status:"PASS",detail:""},
+  {table:"vehicles",name:"Quality score 0–100",status:"PASS",detail:""},
+  {table:"vehicles",name:"Valid shift values",status:"PASS",detail:""},
+  {table:"vehicles",name:"Weight > 0",status:"PASS",detail:""},
+  {table:"vehicles",name:"Production date not null",status:"PASS",detail:""},
+  {table:"vehicles",name:"No duplicate VINs",status:"PASS",detail:""},
+  {table:"vehicles",name:"Valid status values",status:"PASS",detail:""},
+  {table:"parts",name:"No null part_number",status:"PASS",detail:""},
+  {table:"parts",name:"Unit cost > 0",status:"PASS",detail:""},
+  {table:"parts",name:"Quantity >= 1",status:"PASS",detail:""},
+  {table:"parts",name:"Valid currency",status:"PASS",detail:""},
+  {table:"parts",name:"Defect flag is 0 or 1",status:"PASS",detail:""},
+  {table:"parts",name:"All vehicle_ids exist",status:"PASS",detail:"referential integrity"},
+  {table:"suppliers",name:"Supplier codes unique",status:"PASS",detail:""},
+  {table:"suppliers",name:"Rating between 0–5",status:"PASS",detail:""},
+  {table:"suppliers",name:"Tier is 1, 2, or 3",status:"PASS",detail:""},
+  {table:"suppliers",name:"is_active is 0 or 1",status:"PASS",detail:""},
+  {table:"suppliers",name:"Contract start < end",status:"PASS",detail:""},
+  {table:"quality_checks",name:"pass_fail valid values",status:"PASS",detail:""},
+  {table:"quality_checks",name:"Rework hours >= 0",status:"PASS",detail:""},
+  {table:"quality_checks",name:"All vehicle_ids exist",status:"PASS",detail:"referential integrity"},
+  {table:"quality_checks",name:"Valid test types",status:"PASS",detail:""},
+];
+
+const list = document.getElementById('assertion-list');
+assertions.forEach(a => {
+  const row = document.createElement('div');
+  row.className = 'assertion-row';
+  row.innerHTML = `<div class="a-status ${a.status==='PASS'?'a-pass':'a-fail'}">${a.status==='PASS'?'✓':'✗'}</div><div class="a-table">${a.table}</div><div class="a-name">${a.name}</div>${a.detail?`<div class="a-detail">${a.detail}</div>`:''}`;
+  list.appendChild(row);
+});
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['schema','assertions','analytics'][i]===id));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+</script>

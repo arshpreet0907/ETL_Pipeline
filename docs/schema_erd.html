@@ -1,0 +1,113 @@
+
+<div id="erd"></div>
+<style>
+#erd svg { width: 100%; }
+#erd svg.erDiagram .divider path { stroke-opacity: 0.5; }
+#erd svg.erDiagram .row-rect-odd path,
+#erd svg.erDiagram .row-rect-odd rect,
+#erd svg.erDiagram .row-rect-even path,
+#erd svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#2a2a28' : '#f1efe8',
+    primaryBorderColor: dark ? '#5f5e5a' : '#b4b2a9',
+  },
+});
+const { svg } = await mermaid.render('erd-svg', `erDiagram
+  vehicles ||--o{ parts : "has many"
+  vehicles ||--o{ quality_checks : "inspected via"
+  suppliers ||--o{ parts : "supplies"
+
+  vehicles {
+    int vehicle_id PK
+    string vin
+    string model_code
+    string variant
+    string color_code
+    string engine_type
+    string plant_code
+    int line_number
+    date production_date
+    string shift
+    string status
+    float quality_score
+    float weight_kg
+    datetime created_at
+  }
+
+  parts {
+    int part_id PK
+    int vehicle_id FK
+    string part_number
+    string part_name
+    string supplier_code FK
+    int quantity
+    float unit_cost
+    string currency
+    int install_time_min
+    int defect_flag
+    string batch_number
+  }
+
+  suppliers {
+    int supplier_id PK
+    string supplier_code
+    string supplier_name
+    string country
+    int tier
+    float rating
+    date contract_start
+    date contract_end
+    int is_active
+  }
+
+  quality_checks {
+    int check_id PK
+    int vehicle_id FK
+    date check_date
+    string inspector_id
+    string station
+    string test_type
+    string result
+    string defect_code
+    float rework_hours
+    string pass_fail
+  }
+`);
+document.getElementById('erd').innerHTML = svg;
+document.querySelectorAll('#erd svg.erDiagram .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+document.querySelectorAll('#erd svg.erDiagram .row-rect-odd path, #erd svg.erDiagram .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>

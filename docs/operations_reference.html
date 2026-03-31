@@ -1,0 +1,98 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.section{margin-bottom:1.75rem}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem}
+.op-list{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.op-row{display:grid;grid-template-columns:180px 1fr 160px;gap:0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.op-row:last-child{border-bottom:none}
+.op-row:hover{background:var(--color-background-secondary)}
+.op-cell{padding:9px 12px;font-size:12px}
+.op-name{font-weight:500;color:var(--color-text-primary);font-family:var(--font-mono)}
+.op-desc{color:var(--color-text-secondary);line-height:1.5}
+.op-code{font-family:var(--font-mono);font-size:11px;color:var(--color-text-tertiary);background:var(--color-background-secondary);border-radius:4px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-header{background:var(--color-background-secondary);font-size:11px;font-weight:500;color:var(--color-text-tertiary)}
+.assert-row{display:grid;grid-template-columns:100px 140px 1fr;gap:0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.assert-row:last-child{border-bottom:none}
+.assert-row:hover{background:var(--color-background-secondary)}
+.assert-cell{padding:8px 12px;font-size:12px}
+.badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:500}
+.b-null{background:#E6F1FB;color:#0C447C}
+.b-range{background:#EAF3DE;color:#27500A}
+.b-ri{background:#FAEEDA;color:#633806}
+.b-enum{background:#EEEDFE;color:#3C3489}
+.b-unique{background:#FAECE7;color:#712B13}
+.b-date{background:#FBEAF0;color:#72243E}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="section">
+  <div class="section-label">Transformations — what we do and why</div>
+  <div class="op-list">
+    <div class="op-row op-header"><div class="op-cell">Operation</div><div class="op-cell">What it does</div><div class="op-cell">Pandas / numpy call</div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Surrogate key</div><div class="op-cell op-desc">Replaces natural PK with a DW-standard integer key. Natural PKs (vehicle_id) can gap, reset, or collide across systems. Surrogate keys are stable and independent of source.</div><div class="op-cell"><span class="op-code">range(last_max+1, n)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">String composition</div><div class="op-cell op-desc">Merges model_code + variant into model_variant_name. The target DW wants a single descriptive label per vehicle for report grouping, not two separate dimension lookups.</div><div class="op-cell"><span class="op-code">col_a + "_" + col_b</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Date decomposition</div><div class="op-cell op-desc">Splits production_date into production_year and production_month. Analysts query "all vehicles from Q3 2022" constantly — pre-extracting avoids repeated YEAR() calls in every query.</div><div class="op-cell"><span class="op-code">.dt.year / .dt.month</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Multi-condition band</div><div class="op-cell op-desc">Converts quality_score (float) into quality_tier (string bucket). Business users don't think in raw scores — they think in tiers. np.select handles 3+ conditions cleanly without chained np.where.</div><div class="op-cell"><span class="op-code">np.select(conds, vals)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Binary condition</div><div class="op-cell op-desc">Flags weight_category (HEAVY/LIGHT) and is_electric_vehicle (1/0). np.where is faster than .apply() for single yes/no conditions — it operates on the whole array at C speed.</div><div class="op-cell"><span class="op-code">np.where(cond, a, b)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Numeric multiply</div><div class="op-cell op-desc">Computes total_cost_eur = quantity × unit_cost per part row. The source records unit price only — the DW needs the line total for cost aggregations without forcing every analyst to recalculate it.</div><div class="op-cell"><span class="op-code">df[a] * df[b]</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Unit conversion</div><div class="op-cell op-desc">Converts install_time_min to installation_hrs. Engineers log in minutes; finance and scheduling reports use hours. Standardising the unit in the DW removes the conversion burden from every consumer.</div><div class="op-cell"><span class="op-code">col / 60).round(2)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Null-to-numeric</div><div class="op-cell op-desc">Derives has_defect from whether defect_code is null. Null-checking in SQL is verbose and error-prone. A pre-computed 0/1 flag makes WHERE has_defect=1 trivial and allows SUM() aggregations.</div><div class="op-cell"><span class="op-code">.notna().astype(int)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">String-to-numeric</div><div class="op-cell op-desc">Converts pass_fail ("PASS"/"FAIL") to is_passed (1/0). String columns can't be summed or averaged. Numeric flags allow pass_rate = AVG(is_passed) and COUNT(is_passed) directly in SQL.</div><div class="op-cell"><span class="op-code">(col=="PASS").astype(int)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Cost derivation</div><div class="op-cell op-desc">Computes rework_cost_usd = rework_hours × $85. Baking in the labour rate assumption makes the calculation auditable and versioned — if the rate changes, one config value changes, not every report.</div><div class="op-cell"><span class="op-code">.fillna(0) * 85</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Dict map</div><div class="op-cell op-desc">Maps tier (1/2/3) to tier_label (STRATEGIC/PREFERRED/APPROVED). Dictionary maps are cleaner than np.select for small static lookups and produce readable labels for dashboards.</div><div class="op-cell"><span class="op-code">.map({1:"X", 2:"Y"})</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Timedelta days</div><div class="op-cell op-desc">Computes contract_duration_days from two date columns. Lets procurement analysts filter "contracts expiring in under 90 days" without computing dates in every query.</div><div class="op-cell"><span class="op-code">(end - start).dt.days</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Column rename</div><div class="op-cell op-desc">Applies the entire source→target name mapping in one step using the COLUMN_MAPPINGS dict. A single .rename() call is the cleanest way to apply all name changes before .to_sql().</div><div class="op-cell"><span class="op-code">.rename(columns=map)</span></div></div>
+
+    <div class="op-row"><div class="op-cell op-name">Column selection</div><div class="op-cell op-desc">Drops source columns not in the target schema (variant, created_at, line_number, currency, install_time_min, is_active, pass_fail). Subset selection before load prevents schema errors.</div><div class="op-cell"><span class="op-code">df[list(mapping.values())]</span></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Assertions — what we check and why it matters</div>
+  <div class="op-list">
+    <div class="assert-row op-header"><div class="assert-cell">Table</div><div class="assert-cell">Type</div><div class="assert-cell">What is being checked and why</div></div>
+
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-null">null check</span></div><div class="assert-cell op-desc">VIN must never be null — it is the legal identity of a vehicle globally. A null VIN means the record is untraceable.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-range">format check</span></div><div class="assert-cell op-desc">VIN is exactly 17 characters by international standard (ISO 3779). Shorter or longer means the source system truncated or corrupted it.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-unique">uniqueness</span></div><div class="assert-cell op-desc">No two vehicles can share a VIN. A duplicate indicates either a data entry error or a join that inadvertently created duplicate rows.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">quality_score must be 0–100. Values outside this range are physically impossible and likely indicate a scoring formula bug upstream.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">shift must be MORNING / AFTERNOON / NIGHT. Any other value means the source system accepted a free-text entry that will break downstream grouping.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">status must be one of 4 valid states. Unknown states would create a 5th bucket in every status report — silently skewing completion metrics.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">weight_kg must be positive. A zero or negative weight is physically impossible and would corrupt weight-based aggregations.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">vehicles</div><div class="assert-cell"><span class="badge b-null">null check</span></div><div class="assert-cell op-desc">production_date must be present. Null dates break all time-series partitioning and make it impossible to assign the vehicle to a production period.</div></div>
+
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-null">null check</span></div><div class="assert-cell op-desc">part_number must be present — it is the catalogue reference used for procurement, recall tracking, and warranty claims.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">unit_cost must be positive. A zero or negative cost is likely a data entry error and would distort all cost-of-goods analytics.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">quantity must be ≥ 1. Zero-quantity BOM lines are meaningless records that inflate part counts without contributing to cost.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">currency must be a recognised code. Unknown currencies would corrupt the total_cost derivation and make financial rollups unreliable.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">defect_flag must be 0 or 1. Any other value means the flag column is being misused, potentially masking real defect data.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">parts</div><div class="assert-cell"><span class="badge b-ri">referential integrity</span></div><div class="assert-cell op-desc">Every vehicle_id in parts must exist in vehicles. Orphaned part records would be invisible in any vehicle-joined report — silent data loss.</div></div>
+
+    <div class="assert-row"><div class="assert-cell op-desc">suppliers</div><div class="assert-cell"><span class="badge b-unique">uniqueness</span></div><div class="assert-cell op-desc">supplier_code must be unique. Duplicates mean two rows claim to be the same supplier, causing double-counting in cost and parts-by-supplier reports.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">suppliers</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">rating must be 0–5. Out-of-range values mean the scoring system was misconfigured and ratings cannot be compared meaningfully.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">suppliers</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">tier must be 1, 2, or 3. Any other value breaks the tier_label mapping and places suppliers outside the supply-chain hierarchy.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">suppliers</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">is_active must be 0 or 1. Unexpected values mean the active flag is inconsistently populated and active_status derivation will produce wrong results.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">suppliers</div><div class="assert-cell"><span class="badge b-date">date logic</span></div><div class="assert-cell op-desc">contract_start must be before contract_end. Reversed dates mean the contract duration would be negative — a clear data quality failure in the source system.</div></div>
+
+    <div class="assert-row"><div class="assert-cell op-desc">quality_checks</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">pass_fail must be exactly "PASS" or "FAIL". Any other value breaks the is_passed derivation and corrupts the pass-rate metric across the entire QC dataset.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">quality_checks</div><div class="assert-cell"><span class="badge b-range">range check</span></div><div class="assert-cell op-desc">rework_hours must be ≥ 0. Negative rework hours are physically impossible and would produce negative rework_cost_usd values.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">quality_checks</div><div class="assert-cell"><span class="badge b-ri">referential integrity</span></div><div class="assert-cell op-desc">Every vehicle_id in quality_checks must exist in vehicles. Orphaned QC records cannot be attributed to a vehicle — they become unanalysable noise.</div></div>
+    <div class="assert-row"><div class="assert-cell op-desc">quality_checks</div><div class="assert-cell"><span class="badge b-enum">enum check</span></div><div class="assert-cell op-desc">test_type must be one of the 5 defined test categories. Unknown types would create spurious categories in defect-rate-by-test-type analysis.</div></div>
+  </div>
+</div>
+</div>
