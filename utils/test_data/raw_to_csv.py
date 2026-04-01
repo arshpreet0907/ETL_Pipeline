@@ -1,9 +1,9 @@
 import csv
 import re
 
-# input_files=["suppliers","vehicles","parts","quality_checks"]
+input_files=["suppliers","vehicles","parts","quality_checks"]
 # input_files=["suppliers_xl","vehicles_xl","parts_xl","quality_checks_xl"]
-input_files=["suppliers_xs","vehicles_xs","parts_xs","quality_checks_xs"]
+# input_files=["suppliers_xs","vehicles_xs","parts_xs","quality_checks_xs"]
 csv_files=["suppliers","vehicles","parts","quality_checks"]
 
 INPUT_FILE = ""

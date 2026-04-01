@@ -97,6 +97,7 @@ def transform_vehicles(
     updated_at      → dw_updated_at         (rename)
     (DB auto)       → dw_inserted_at        (excluded from INSERT)
     """
+    log.debug("transform_vehicles: started with %d rows", len(src))
     df = src.copy()
     tgt = pd.DataFrame()
 
@@ -142,6 +143,7 @@ def transform_vehicles(
     )
 
     # ── column order matches target DDL (vehicle_sk omitted — auto by DB) ─
+    log.info("transform_vehicles: completed, %d rows transformed", len(tgt))
     return tgt[[
         "src_vehicle_id", "vin_number", "model_code", "model_variant_name",
         "color_code", "engine_type", "manufacturing_plant",
@@ -186,6 +188,7 @@ def transform_suppliers(
     updated_at      → dw_updated_at          (rename)
     (DB auto)       → dw_inserted_at         (excluded from INSERT)
     """
+    log.debug("transform_suppliers: started with %d rows", len(src))
     df = src.copy()
     tgt = pd.DataFrame()
 
@@ -225,6 +228,7 @@ def transform_suppliers(
     )
 
     # ── column order (supplier_sk omitted — auto by DB) ───────────────────
+    log.info("transform_suppliers: completed, %d rows transformed", len(tgt))
     return tgt[[
         "supplier_id", "supplier_code", "supplier_name",
         "country_of_origin", "supplier_tier", "tier_label",
@@ -269,6 +273,7 @@ def transform_parts(
         501–2000    → MID_VALUE
         > 2000      → HIGH_VALUE
     """
+    log.debug("transform_parts: started with %d rows", len(src))
     df = src.copy()
     tgt = pd.DataFrame()
 
@@ -305,6 +310,7 @@ def transform_parts(
     )
 
     # ── column order ──────────────────────────────────────────────────────
+    log.info("transform_parts: completed, %d rows transformed", len(tgt))
     return tgt[[
         "part_id", "vehicle_id", "part_number", "component_name",
         "supplier_code", "quantity_used", "unit_cost_eur", "total_cost_eur",
@@ -341,6 +347,7 @@ def transform_quality_checks(
     (DB auto)       → dw_inserted_at        (excluded from INSERT)
     (NaT)           → dw_updated_at         (NULL on initial load)
     """
+    log.debug("transform_quality_checks: started with %d rows", len(src))
     df = src.copy()
     tgt = pd.DataFrame()
 
@@ -371,6 +378,7 @@ def transform_quality_checks(
     )
 
     # ── column order ──────────────────────────────────────────────────────
+    log.info("transform_quality_checks: completed, %d rows transformed", len(tgt))
     return tgt[[
         "qc_id", "vehicle_id",
         "inspection_date", "inspection_year",
@@ -407,6 +415,7 @@ def transform_all(
     -------
     dict with the same 4 keys, transformed DataFrames ready for push_to_db().
     """
+    log.debug("transform_all: starting transforms for tables: %s", list(clean_frames.keys()))
     return {
         "suppliers":      transform_suppliers(
                               clean_frames["suppliers"],

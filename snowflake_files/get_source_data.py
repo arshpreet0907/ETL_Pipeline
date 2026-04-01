@@ -2,7 +2,7 @@
 get_source_data.py
 ------------------
 Queries the source MySQL database and saves all four source tables
-to snowflake/source_data.xlsx, one sheet per table.
+to snowflake_files/source_data.xlsx, one sheet per table.
 
 Run this once (or whenever fresh source data is needed) before
 executing the Snowflake pipeline.
@@ -60,4 +60,6 @@ def fetch_and_save(
 
 
 if __name__ == "__main__":
-    fetch_and_save()
+    watermark_from=None
+    watermark_to=None
+    fetch_and_save(watermark_from=watermark_from,watermark_to=watermark_to)

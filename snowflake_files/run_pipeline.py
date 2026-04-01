@@ -6,7 +6,7 @@ execution in the Snowflake etl_run_log table.
 
 Run
 ---
-    python snowflake/run_pipeline.py
+    python snowflake_files/run_pipeline.py
 """
 
 import logging

@@ -59,7 +59,7 @@ _SKIP_COLS: dict[str, set] = {
 
 def load_source_excel() -> dict[str, pd.DataFrame]:
     """
-    Read all four source tables from snowflake/source_data.xlsx.
+    Read all four source tables from snowflake_files/source_data.xlsx.
     Run get_source_data.py first to generate this file.
 
     Returns

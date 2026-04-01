@@ -29,7 +29,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import pandas as pd
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 
 log = logging.getLogger(__name__)
 
@@ -253,6 +253,44 @@ def get_run_watermark_to() -> str:
     """
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
+
+def extract_rows_by_pk(
+        engine:Engine,
+        table_name: str,
+        pk_pairs: list[tuple],
+) -> pd.DataFrame:
+    """
+    Extract specific rows from a table identified by one or more primary key
+    column/value pairs.
+
+    Parameters
+    ----------
+    engine     : SQLAlchemy engine (source or target, caller decides)
+    table_name : one of "suppliers", "vehicles", "parts", "quality_checks"
+    pk_pairs   : list of (column, value) tuples that together identify the row(s),
+                 e.g. [("vehicle_id", "42")] or [("part_id", "7"), ("supplier_id", "3")]
+
+    Returns
+    -------
+    pd.DataFrame of matching rows (may be >1 if composite key is partial)
+
+    Example
+    -------
+    engine = get_engine("source")
+    df = extract_rows_by_pk(engine, "vehicles", [("vehicle_id", "42")])
+    """
+    if not pk_pairs:
+        raise ValueError("pk_pairs must contain at least one (column, value) tuple.")
+
+    # Build parameterised WHERE clause to avoid SQL injection
+    conditions = " AND ".join(f"{col} = :{col}" for col, _ in pk_pairs)
+    params = {col: val for col, val in pk_pairs}
+    sql = text(f"SELECT * FROM {table_name} WHERE {conditions}")
+
+    log.info("Extracting rows from %s WHERE %s", table_name, conditions)
+    df = pd.read_sql(sql, engine, params=params)
+    log.info("Extracted %d row(s) from %s", len(df), table_name)
+    return df
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STANDALONE SMOKE TEST

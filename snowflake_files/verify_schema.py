@@ -6,7 +6,7 @@ expects — columns, nullability, and data types — for all 5 tables.
 
 Run
 ---
-    python snowflake/verify_schema.py
+    python snowflake_files/verify_schema.py
 
 Output
 ------

@@ -1,5 +1,5 @@
 '''
-sql to snowflake with validations,
+sql to snowflake_files with validations,
 queries used for tables
 using python
 

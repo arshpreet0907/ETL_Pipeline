@@ -28,7 +28,7 @@ def get_snowflake_engine() -> Engine:
     if not all([account, user, password, database, schema, warehouse]):
         raise EnvironmentError(
             "Missing one or more required Snowflake env vars. "
-            "Check snowflake/.env — see setup.txt for where to find them."
+            "Check .env — see setup.txt for where to find them."
         )
 
     engine = create_engine(
