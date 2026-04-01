@@ -1,3 +1,5 @@
+!**/.gitkeep
+
 .idea/
 .venv/
 
@@ -14,18 +16,13 @@ outputs/assertion_output/*
 outputs/clean_data_csv/*
 outputs/parquet/*
 
-!outputs/assertion_failures/.gitkeep
-!outputs/assertion_output/.gitkeep
-!outputs/clean_data_csv/.gitkeep
-!outputs/parquet/.gitkeep
+
 
 snowflake_files/table_csvs/*
-!snowflake_files/table_csvs/.gitkeep
 
 utils/test_data/txt/*_xl.txt
 utils/test_data/txt/*_xs.txt
 
 utils/test_data/csv/*
-!utils/test_data/csv/.gitkeep
 
 snowflake_files/source_data*.xlsx
