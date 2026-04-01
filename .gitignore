@@ -1,5 +1,3 @@
-!**/.gitkeep
-
 .idea/
 .venv/
 
@@ -11,18 +9,18 @@ utils/test_data/__pycache__/
 
 .env
 
-outputs/assertion_failures/*
-outputs/assertion_output/*
-outputs/clean_data_csv/*
-outputs/parquet/*
+outputs/assertion_failures/*.xlsx
+outputs/assertion_output/*.xlsx
+outputs/clean_data_csv/*.csv
+outputs/parquet/*/*.parquet
 
 
 
-snowflake_files/table_csvs/*
+snowflake_files/table_csvs/*.csv
 
 utils/test_data/txt/*_xl.txt
 utils/test_data/txt/*_xs.txt
 
-utils/test_data/csv/*
+utils/test_data/csv/*.csv
 
 snowflake_files/source_data*.xlsx
